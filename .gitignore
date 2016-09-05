@@ -1,6 +1,10 @@
 # elm
 elm-stuff
 repl-temp-*
+linter-elm-make.json
+
+#js
+node_modules
 
 # others
 .DS_Store

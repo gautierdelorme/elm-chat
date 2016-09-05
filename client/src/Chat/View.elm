@@ -10,15 +10,15 @@ view : Model -> Html Msg
 view model =
   div []
     [ viewMessages model.messages
-    , input [ onInput Input, value model.input ] []
+    , input [ onInput Input, value model.input, placeholder "Write something..." ] []
     , button [ onClick Send ] [ text "Send" ]
     ]
 
 viewMessages : List String -> Html msg
 viewMessages messages =
   List.reverse messages
-      |> List.map viewMessage
-        |> div []
+  |> List.map viewMessage
+  |> div []
 
 viewMessage : String -> Html msg
 viewMessage msg =

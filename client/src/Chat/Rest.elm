@@ -1,18 +1,12 @@
 module Chat.Rest exposing (send, listen)
 
 import Chat.Types exposing (..)
-import Json.Decode exposing (..)
 import WebSocket
 
 
 echoServer : String
 echoServer =
-  "ws://echo.websocket.org"
-
-
-decodeMessages : Decoder Messages
-decodeMessages =
-    "messages" := list string
+  "ws://localhost:3000"
 
 
 send : String -> Cmd Msg
