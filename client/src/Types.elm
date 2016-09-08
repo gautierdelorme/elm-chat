@@ -1,7 +1,7 @@
 module Types exposing (..)
 
 import Chat.Types as Chat
-
+import Material
 
 type Msg
   = Pseudo String
@@ -9,6 +9,7 @@ type Msg
   | LoginSucceed
   | LoginFailed
   | Logout
+  | Mdl (Material.Msg Msg)
   | ChatMsg Chat.Msg
 
 
@@ -22,5 +23,6 @@ type alias Model =
   { page : Page
   , pseudo : String
   , connected : Bool
+  , mdl : Material.Model
   , chat : Chat.Model
   }

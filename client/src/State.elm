@@ -4,15 +4,14 @@ import Types exposing (..)
 import Chat.State as Chat
 import Nav
 import String
-
+import Material
 
 -- INIT
 
 
 init : Result String Page -> (Model, Cmd Msg)
 init result =
-  Chat.init ""
-  |> Model Home "" False
+  Model Home "gautier" True Material.model Chat.model
   |> Nav.urlUpdate result
 
 
@@ -22,6 +21,8 @@ init result =
 update : Msg -> Model -> (Model, Cmd Msg)
 update msg model =
   case msg of
+    Mdl msg ->
+      Material.update msg model
     Pseudo str ->
       { model
       | pseudo = str
@@ -68,4 +69,5 @@ subscriptions model =
   Sub.batch
     [ Chat.subscriptions model.chat
       |> Sub.map ChatMsg
+    , Material.subscriptions Mdl model
     ]
