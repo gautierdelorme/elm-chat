@@ -1,9 +1,8 @@
 module View exposing (view)
 
 import Types exposing (..)
-import Chat.View as Chat
+import String
 import Html exposing (..)
-import Html.App as Html
 import Material.Scheme
 import Material.Button as Button
 import Material.Textfield as Textfield
@@ -12,6 +11,7 @@ import Material.Color as Color
 import Material.Options as Options
 import Material.Typography as Typo
 import Material.Icon as Icon
+import Material.List as List
 import Material.Options as Options exposing (css)
 
 
@@ -97,9 +97,67 @@ viewPage model =
     Home ->
       div [] []
     Chat ->
-      Chat.view model.chat
-      |> Html.map ChatMsg
+      chatView model
 
+
+chatView : Model -> Html Msg
+chatView model =
+  Options.div
+    [ css "display" "flex"
+    , css "flex-direction" "column"
+    , css  "flex" "1"
+    ]
+    [ viewMessages model
+    , Options.div
+      [ css "display" "flex"
+      , css  "margin" "0 10px 0 10px"
+      ]
+      [ Textfield.render Mdl [0] model.mdl
+        [ Textfield.label "Write something..."
+        , Textfield.floatingLabel
+        , Textfield.value model.input
+        , Textfield.onInput Input
+        , css "flex" "1"
+        ]
+      , Button.render Mdl [0] model.mdl
+        [ Button.colored
+        , Button.onClick Send
+        , css "margin-top" "15px"
+        ]
+        [ Icon.i "send" ]
+      ]
+    ]
+
+viewMessages : Model -> Html msg
+viewMessages model =
+  List.reverse model.messages
+  |> List.map (viewMessage model)
+  |> List.ul
+    [ css "overflow-y" "scroll"
+    , css  "flex" "1"
+    ]
+
+viewMessage : Model -> String -> Html msg
+viewMessage model msg =
+  List.li [ List.withBody ]
+    [ Options.div
+      [ Options.center
+      , Color.background (Color.color Color.Amber Color.S500)
+      , Color.text Color.accentContrast
+      , Typo.title
+      , css "width" "36px"
+      , css "height" "36px"
+      , css "margin-right" "2rem"
+      ]
+      [ String.left 1 model.pseudo
+        |> String.toUpper
+        |> text
+      ]
+    , List.content []
+      [ text model.pseudo
+      , List.body [] [ text msg ]
+      ]
+    ]
 
 -- CSS
 

@@ -1,7 +1,7 @@
 module State exposing (init, update, subscriptions)
 
 import Types exposing (..)
-import Chat.State as Chat
+import Rest
 import Nav
 import String
 import Material
@@ -11,7 +11,7 @@ import Material
 
 init : Result String Page -> (Model, Cmd Msg)
 init result =
-  Model Home "gautier" True Material.model Chat.model
+  Model Home "gautier" True "" [] Material.model
   |> Nav.urlUpdate result
 
 
@@ -38,7 +38,6 @@ update msg model =
     LoginSucceed ->
       { model
       | connected = True
-      , chat = Chat.init model.pseudo
       }
       ! [ Nav.goTo Chat ]
     LoginFailed ->
@@ -50,15 +49,27 @@ update msg model =
       , pseudo = ""
       }
       ! [ Nav.goTo Home ]
-    ChatMsg msg ->
-      let
-        (chat, chatCmd) =
-          Chat.update msg model.chat
-      in
-        { model
-        | chat = chat
-        }
-        ! [ Cmd.map ChatMsg chatCmd ]
+    Input str ->
+      { model
+      | input = str
+      }
+      ! []
+    Send ->
+      case String.isEmpty model.input of
+        False ->
+          { model
+          | input = ""
+          }
+          ! [ Rest.send (model.pseudo++": "++model.input)
+            ]
+        True ->
+          model
+          ! []
+    Receive str ->
+      { model
+      | messages = str :: model.messages
+      }
+      ! []
 
 
 -- SUBSCRIPTIONS
@@ -67,7 +78,6 @@ update msg model =
 subscriptions : Model -> Sub Msg
 subscriptions model =
   Sub.batch
-    [ Chat.subscriptions model.chat
-      |> Sub.map ChatMsg
+    [ Rest.listen Receive
     , Material.subscriptions Mdl model
     ]
