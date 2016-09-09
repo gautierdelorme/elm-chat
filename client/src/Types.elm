@@ -12,7 +12,13 @@ type Msg
   | Input String
   | Send
   | Receive String
+  | MessageReceive String
   | Mdl (Material.Msg Msg)
+
+
+type MsgServer
+  = LoginResponse
+  | NewMessage
 
 
 type Page
