@@ -12,7 +12,7 @@ type Msg
   | Input String
   | Send
   | Receive String
-  | MessageReceive String
+  | MessageReceive Message
   | Mdl (Material.Msg Msg)
 
 
@@ -26,8 +26,14 @@ type Page
   | Chat
 
 
+type alias Message =
+  { pseudo : String
+  , content : String
+  }
+
+
 type alias Messages =
-  List String
+  List Message
 
 
 type alias Model =

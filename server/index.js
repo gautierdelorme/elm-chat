@@ -7,10 +7,19 @@ var app = require('express')()
   , port = 3000
 
 
-wss.connectedUsers = []
+server.listen(port, function () {
+  console.log('Listening on ' + server.address().port)
+})
+
+
+// HANDLING
+
+
+wss.activeSockets = {}
 
 wss.broadcast = function(data) {
   wss.clients.map(function(client) {
+    console.log(client)
     client.send(data)
   })
 }
@@ -27,15 +36,18 @@ wss.processMessage = function(ws, message) {
     case 'login':
       wss.processLogin(ws, json_message['pseudo'])
       break;
+    case 'logout':
+      wss.processLogout(json_message['pseudo'])
+      break;
     default:
       wss.broadcast(message)
   }
 }
 
 wss.processLogin = function(ws, pseudo) {
-  var accepted = pseudo.length > 0 && !_.includes(wss.connectedUsers, pseudo)
+  var accepted = pseudo.length > 0 && !_.includes(_.keys(wss.activeSockets), pseudo)
   if (accepted) {
-    wss.connectedUsers.push(pseudo)
+    wss.activeSockets[pseudo] = ws
   }
   ws.send(JSON.stringify({
     type: 'loginResponse',
@@ -43,6 +55,7 @@ wss.processLogin = function(ws, pseudo) {
   }))
 }
 
-server.listen(port, function () {
-  console.log('Listening on ' + server.address().port)
-})
+wss.processLogout = function(pseudo) {
+  wss.activeSockets[pseudo].close
+  delete wss.activeSockets[pseudo]
+}

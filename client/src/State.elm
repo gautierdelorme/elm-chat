@@ -39,8 +39,11 @@ update msg model =
     Logout ->
       { model | connected = False
               , pseudo = ""
+              , messages = []
       }
-      ! [ Nav.goTo Home ]
+      ! [ Rest.requestLogout model
+        , Nav.goTo Home
+        ]
     Input str ->
       { model | input = str
       }
@@ -48,7 +51,7 @@ update msg model =
     Send ->
       { model | input = ""
       }
-      ! [ Rest.sendMessage model
+      ! [ Rest.sendMessage (Message model.pseudo model.input)
         ]
     Receive msg ->
       case Rest.decodeTypeServer msg of
@@ -70,10 +73,10 @@ update msg model =
               case Rest.decodeNewMessage msg of
                 Nothing ->
                   model ! []
-                Just (pseudo, newMessage) ->
+                Just newMessage ->
                   update (MessageReceive newMessage) model
-    MessageReceive str ->
-      { model | messages = str :: model.messages
+    MessageReceive msg ->
+      { model | messages = msg :: model.messages
       }
       ! []
 

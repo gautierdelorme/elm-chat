@@ -137,7 +137,7 @@ viewMessages model =
     , css  "flex" "1"
     ]
 
-viewMessage : Model -> String -> Html msg
+viewMessage : Model -> Message -> Html msg
 viewMessage model msg =
   List.li [ List.withBody ]
     [ Options.div
@@ -149,13 +149,13 @@ viewMessage model msg =
       , css "height" "36px"
       , css "margin-right" "2rem"
       ]
-      [ String.left 1 model.pseudo
+      [ String.left 1 msg.pseudo
         |> String.toUpper
         |> text
       ]
     , List.content []
-      [ text model.pseudo
-      , List.body [] [ text msg ]
+      [ text msg.pseudo
+      , List.body [] [ text msg.content ]
       ]
     ]
 
