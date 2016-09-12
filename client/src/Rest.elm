@@ -1,11 +1,12 @@
 module Rest exposing
   ( requestLogin
+  , requestLogout
   , sendMessage
   , decodeTypeServer
   , decodeLoginResponse
   , decodeNewMessage
+  , decodeNewUsersList
   , listen
-  , requestLogout
   )
 
 import Types exposing (..)
@@ -42,8 +43,8 @@ logoutJSON pseudo =
 messageJSON : Message -> Encoder.Value
 messageJSON msg =
     Encoder.object
-      [ ("type", Encoder.string "new_message")
-      , ("pseudo", Encoder.string msg.pseudo)
+      [ ("type", Encoder.string "newMessage")
+      , ("pseudo", Encoder.string msg.user.pseudo)
       , ("content", Encoder.string msg.content)
       ]
 
@@ -73,8 +74,10 @@ decodeTypeServer msg =
       case value of
         "loginResponse" ->
           Just LoginResponse
-        "new_message" ->
+        "newMessage" ->
           Just NewMessage
+        "newUsersList" ->
+          Just NewUsersList
         _ ->
           Nothing
 
@@ -102,21 +105,36 @@ decodeNewMessage msg =
     Err error ->
       Nothing
     Ok (pseudo, message) ->
-      Just (Message pseudo message)
+      Just (Message (User pseudo) message)
 
+
+newUsersList : Decoder.Decoder (List String)
+newUsersList =
+  "users" := Decoder.list Decoder.string
+
+
+decodeNewUsersList : String -> Maybe(Users)
+decodeNewUsersList msg =
+  case Decoder.decodeString newUsersList msg of
+    Err error ->
+      Nothing
+    Ok users ->
+      List.map User users
+      |> Just
 
 -- HANDLING
 
 
-requestLogin : Model -> Cmd Msg
-requestLogin model =
-  loginJSON model.pseudo
+requestLogin : User -> Cmd Msg
+requestLogin user =
+  loginJSON user.pseudo
   |> Encoder.encode 0
   |> send
 
-requestLogout : Model -> Cmd Msg
-requestLogout model =
-  logoutJSON model.pseudo
+
+requestLogout : User -> Cmd Msg
+requestLogout user =
+  logoutJSON user.pseudo
   |> Encoder.encode 0
   |> send
 

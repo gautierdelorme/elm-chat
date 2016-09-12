@@ -3,6 +3,9 @@ module Types exposing (..)
 import Material
 
 
+-- Update messages
+
+
 type Msg
   = Pseudo String
   | Login
@@ -13,12 +16,20 @@ type Msg
   | Send
   | Receive String
   | MessageReceive Message
+  | UsersListUpdated Users
   | Mdl (Material.Msg Msg)
+
+
+-- Server messages
 
 
 type MsgServer
   = LoginResponse
   | NewMessage
+  | NewUsersList
+
+
+-- Pagination
 
 
 type Page
@@ -26,8 +37,16 @@ type Page
   | Chat
 
 
-type alias Message =
+-- MODELS
+
+
+type alias User =
   { pseudo : String
+  }
+
+
+type alias Message =
+  { user : User
   , content : String
   }
 
@@ -35,12 +54,16 @@ type alias Message =
 type alias Messages =
   List Message
 
+type alias Users =
+  List User
+
 
 type alias Model =
   { page : Page
-  , pseudo : String
+  , user : User
   , connected : Bool
   , input : String
   , messages : Messages
+  , connectedUsers : Users
   , mdl : Material.Model
   }

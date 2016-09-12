@@ -10,7 +10,14 @@ import Material
 
 init : Result String Page -> (Model, Cmd Msg)
 init result =
-  Model Home "" False "" [] Material.model
+  { page = Home
+  , user = User ""
+  , connected = False
+  , input = ""
+  , messages = []
+  , connectedUsers = []
+  , mdl = Material.model
+  }
   |> Nav.urlUpdate result
 
 
@@ -23,12 +30,15 @@ update msg model =
     Mdl msg ->
       Material.update msg model
     Pseudo str ->
-      { model | pseudo = str
-      }
+      let
+        user = model.user
+      in
+        { model | user = { user | pseudo = str }
+        }
       ! []
     Login ->
       model
-      ! [ Rest.requestLogin model
+      ! [ Rest.requestLogin model.user
         ]
     LoginSucceed ->
       { model | connected = True
@@ -37,21 +47,29 @@ update msg model =
     LoginFailed ->
       model ! []
     Logout ->
-      { model | connected = False
-              , pseudo = ""
-              , messages = []
-      }
-      ! [ Rest.requestLogout model
+      let
+        user = model.user
+      in
+        { model | connected = False
+                , user = { user | pseudo = "" }
+                , messages = []
+        }
+      ! [ Rest.requestLogout model.user
         , Nav.goTo Home
         ]
     Input str ->
       { model | input = str
       }
       ! []
+    UsersListUpdated newUsersList ->
+      { model | connectedUsers = newUsersList
+      }
+      ! []
     Send ->
       { model | input = ""
       }
-      ! [ Rest.sendMessage (Message model.pseudo model.input)
+      ! [ Message model.user model.input
+          |> Rest.sendMessage
         ]
     Receive msg ->
       case Rest.decodeTypeServer msg of
@@ -75,6 +93,12 @@ update msg model =
                   model ! []
                 Just newMessage ->
                   update (MessageReceive newMessage) model
+            NewUsersList ->
+              case Rest.decodeNewUsersList msg of
+                Nothing ->
+                  model ! []
+                Just newUsersList ->
+                  update (UsersListUpdated newUsersList) model
     MessageReceive msg ->
       { model | messages = msg :: model.messages
       }

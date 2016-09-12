@@ -23,10 +23,11 @@ view model =
     , Layout.fixedDrawer
     ]
     { header = viewHeader model
-    , drawer = viewDrawer
+    , drawer = viewDrawer model
     , tabs = ( [], [] )
     , main = [ stylesheet, viewBody model ]
     }
+
 
 viewHeader : Model -> List (Html Msg)
 viewHeader model =
@@ -41,10 +42,21 @@ viewHeader model =
     ]
   ]
 
-viewDrawer : List (Html Msg)
-viewDrawer =
+
+viewDrawer : Model -> List (Html Msg)
+viewDrawer model =
   [ Layout.title [] [ text "Connected users" ]
+  , model.connectedUsers
+    |> List.map (viewConnectedUser model)
+    |> List.ul []
   ]
+
+
+viewConnectedUser : Model -> User -> Html msg
+viewConnectedUser model user =
+  List.li []
+    [ text user.pseudo ]
+
 
 viewBody : Model -> Html Msg
 viewBody model =
@@ -65,7 +77,7 @@ viewBody model =
 viewHeaderConnected : Model -> Html Msg
 viewHeaderConnected model =
   Layout.navigation []
-  [ Options.styled span [ Typo.body2 ] [ text ("Connected as "++model.pseudo) ]
+  [ Options.styled span [ Typo.body2 ] [ text ("Connected as "++model.user.pseudo) ]
   , Layout.link
     [ Layout.onClick Logout
     , Layout.href "#"
@@ -80,7 +92,7 @@ viewHeaderDisconnected model =
   [ Textfield.render Mdl [0] model.mdl
     [ Textfield.label "Enter a pseudo"
     , Textfield.floatingLabel
-    , Textfield.value model.pseudo
+    , Textfield.value model.user.pseudo
     , Textfield.onInput Pseudo
     ]
   , Button.render Mdl [0] model.mdl
@@ -149,12 +161,12 @@ viewMessage model msg =
       , css "height" "36px"
       , css "margin-right" "2rem"
       ]
-      [ String.left 1 msg.pseudo
+      [ String.left 1 msg.user.pseudo
         |> String.toUpper
         |> text
       ]
     , List.content []
-      [ text msg.pseudo
+      [ text msg.user.pseudo
       , List.body [] [ text msg.content ]
       ]
     ]

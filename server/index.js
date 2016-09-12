@@ -17,13 +17,6 @@ server.listen(port, function () {
 
 wss.activeSockets = {}
 
-wss.broadcast = function(data) {
-  wss.clients.map(function(client) {
-    console.log(client)
-    client.send(data)
-  })
-}
-
 wss.on('connection', function(ws) {
   ws.on('message', function(message) {
     wss.processMessage(ws, message)
@@ -35,19 +28,36 @@ wss.processMessage = function(ws, message) {
   switch (json_message['type']) {
     case 'login':
       wss.processLogin(ws, json_message['pseudo'])
-      break;
+      break
     case 'logout':
       wss.processLogout(json_message['pseudo'])
-      break;
-    default:
+      break
+    case 'newMessage':
       wss.broadcast(message)
+      break
+    default:
+      console.log(message)
   }
+}
+
+wss.broadcast = function(data) {
+  wss.clients.map(function(client) {
+    client.send(data)
+  })
+}
+
+wss.sendNewUsersList = function() {
+  wss.broadcast(JSON.stringify({
+    type: 'newUsersList',
+    users: _.keys(wss.activeSockets)
+  }))
 }
 
 wss.processLogin = function(ws, pseudo) {
   var accepted = pseudo.length > 0 && !_.includes(_.keys(wss.activeSockets), pseudo)
   if (accepted) {
     wss.activeSockets[pseudo] = ws
+    wss.sendNewUsersList()
   }
   ws.send(JSON.stringify({
     type: 'loginResponse',
@@ -56,6 +66,6 @@ wss.processLogin = function(ws, pseudo) {
 }
 
 wss.processLogout = function(pseudo) {
-  wss.activeSockets[pseudo].close
   delete wss.activeSockets[pseudo]
+  wss.sendNewUsersList()
 }
