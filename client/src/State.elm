@@ -10,6 +10,12 @@ import Material
 
 init : Result String Page -> (Model, Cmd Msg)
 init result =
+  initialModel
+  |> Nav.urlUpdate result
+
+
+initialModel : Model
+initialModel =
   { page = Home
   , user = User ""
   , connected = False
@@ -18,7 +24,6 @@ init result =
   , connectedUsers = []
   , mdl = Material.model
   }
-  |> Nav.urlUpdate result
 
 
 -- UDPATE
@@ -47,14 +52,8 @@ update msg model =
     LoginFailed ->
       model ! []
     Logout ->
-      let
-        user = model.user
-      in
-        { model | connected = False
-                , user = { user | pseudo = "" }
-                , messages = []
-        }
-      ! [ Rest.requestLogout model.user
+        initialModel
+      ! [ Rest.requestLogout
         , Nav.goTo Home
         ]
     Input str ->
@@ -75,34 +74,39 @@ update msg model =
       case Rest.decodeTypeServer msg of
         Nothing ->
           model ! []
-        Just msg_type ->
-          case msg_type of
-            LoginResponse ->
-              case Rest.decodeLoginResponse msg of
-                Nothing ->
-                  update LoginFailed model
-                Just loginResponse ->
-                  case loginResponse of
-                    True ->
-                      update LoginSucceed model
-                    False ->
-                      update LoginFailed model
-            NewMessage ->
-              case Rest.decodeNewMessage msg of
-                Nothing ->
-                  model ! []
-                Just newMessage ->
-                  update (MessageReceive newMessage) model
-            NewUsersList ->
-              case Rest.decodeNewUsersList msg of
-                Nothing ->
-                  model ! []
-                Just newUsersList ->
-                  update (UsersListUpdated newUsersList) model
+        Just msgType ->
+          handleMessage msg msgType model
     MessageReceive msg ->
       { model | messages = msg :: model.messages
       }
       ! []
+
+
+handleMessage : String -> MsgServer -> Model -> (Model, Cmd Msg)
+handleMessage msg msgType model =
+  case msgType of
+    LoginResponse ->
+      case Rest.decodeLoginResponse msg of
+        Nothing ->
+          update LoginFailed model
+        Just loginResponse ->
+          case loginResponse of
+            True ->
+              update LoginSucceed model
+            False ->
+              update LoginFailed model
+    NewMessage ->
+      case Rest.decodeNewMessage msg of
+        Nothing ->
+          model ! []
+        Just newMessage ->
+          update (MessageReceive newMessage) model
+    NewUsersList ->
+      case Rest.decodeNewUsersList msg of
+        Nothing ->
+          model ! []
+        Just newUsersList ->
+          update (UsersListUpdated newUsersList) model
 
 
 -- SUBSCRIPTIONS

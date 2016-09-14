@@ -32,11 +32,10 @@ loginJSON pseudo =
       ]
 
 
-logoutJSON : String -> Encoder.Value
-logoutJSON pseudo =
+logoutJSON : Encoder.Value
+logoutJSON =
     Encoder.object
       [ ("type", Encoder.string "logout")
-      , ("pseudo", Encoder.string pseudo)
       ]
 
 
@@ -132,9 +131,9 @@ requestLogin user =
   |> send
 
 
-requestLogout : User -> Cmd Msg
-requestLogout user =
-  logoutJSON user.pseudo
+requestLogout : Cmd Msg
+requestLogout =
+  logoutJSON
   |> Encoder.encode 0
   |> send
 

@@ -15,7 +15,7 @@ server.listen(port, function () {
 // HANDLING
 
 
-wss.activeSockets = {}
+wss.connectedClients = {}
 
 wss.on('connection', function(ws) {
   ws.on('message', function(message) {
@@ -30,7 +30,7 @@ wss.processMessage = function(ws, message) {
       wss.processLogin(ws, json_message['pseudo'])
       break
     case 'logout':
-      wss.processLogout(json_message['pseudo'])
+      wss.processLogout(ws)
       break
     case 'newMessage':
       wss.broadcast(message)
@@ -41,22 +41,36 @@ wss.processMessage = function(ws, message) {
 }
 
 wss.broadcast = function(data) {
-  wss.clients.map(function(client) {
-    client.send(data)
+  _.map(wss.connectedClients, function(c) {
+    c.ws.send(data)
   })
+}
+
+wss.pingClients = function() {
+  wss.broadcast(JSON.stringify({
+    type: 'ping'
+  }))
 }
 
 wss.sendNewUsersList = function() {
   wss.broadcast(JSON.stringify({
     type: 'newUsersList',
-    users: _.keys(wss.activeSockets)
+    users: _.map(wss.connectedClients, function(c){return c.pseudo})
   }))
 }
 
+
+// PROCESSING
+
+
 wss.processLogin = function(ws, pseudo) {
-  var accepted = pseudo.length > 0 && !_.includes(_.keys(wss.activeSockets), pseudo)
+  var accepted = pseudo.length > 0 && wss.verifyPseudo(pseudo) && wss.verifyKey(ws)
   if (accepted) {
-    wss.activeSockets[pseudo] = ws
+    wss.connectedClients[wss.keyFor(ws)] = {
+      pseudo: pseudo,
+      ws: ws
+    }
+    wss.registerOnCloseFor(ws)
     wss.sendNewUsersList()
   }
   ws.send(JSON.stringify({
@@ -65,7 +79,29 @@ wss.processLogin = function(ws, pseudo) {
   }))
 }
 
-wss.processLogout = function(pseudo) {
-  delete wss.activeSockets[pseudo]
-  wss.sendNewUsersList()
+wss.processLogout = function(ws) {
+  ws.close()
+}
+
+
+// HELPERS
+
+
+wss.registerOnCloseFor = function(ws) {
+  ws.on('close', function() {
+    delete wss.connectedClients[wss.keyFor(this)]
+    wss.sendNewUsersList()
+  })
+}
+
+wss.keyFor = function(ws) {
+  return ws.upgradeReq.headers['sec-websocket-key']
+}
+
+wss.verifyKey = function(ws) {
+  return wss.keyFor(ws) != null && wss.keyFor(ws) != undefined && !_.some(wss.connectedClients,function(_,k){return k == wss.keyFor(ws)})
+}
+
+wss.verifyPseudo = function(pseudo) {
+  return !_.some(wss.connectedClients, function(c) { return c.pseudo == pseudo })
 }
