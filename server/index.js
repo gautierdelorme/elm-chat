@@ -46,12 +46,6 @@ wss.broadcast = function(data) {
   })
 }
 
-wss.pingClients = function() {
-  wss.broadcast(JSON.stringify({
-    type: 'ping'
-  }))
-}
-
 wss.sendNewUsersList = function() {
   wss.broadcast(JSON.stringify({
     type: 'newUsersList',
