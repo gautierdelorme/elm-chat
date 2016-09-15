@@ -60,8 +60,16 @@ update msg model =
       { model | input = str
       }
       ! []
-    UsersListUpdated newUsersList ->
+    UsersListReceived newUsersList ->
       { model | connectedUsers = newUsersList
+      }
+      ! []
+    UserConnected user ->
+      { model | connectedUsers = user :: model.connectedUsers
+      }
+      ! []
+    UserDisconnected user ->
+      { model | connectedUsers = List.filter ((/=) user) model.connectedUsers
       }
       ! []
     Send ->
@@ -106,7 +114,19 @@ handleMessage msg msgType model =
         Nothing ->
           model ! []
         Just newUsersList ->
-          update (UsersListUpdated newUsersList) model
+          update (UsersListReceived newUsersList) model
+    NewUser ->
+      case Rest.decodeUser msg of
+        Nothing ->
+          model ! []
+        Just user ->
+          update (UserConnected user) model
+    FormerUser ->
+      case Rest.decodeUser msg of
+        Nothing ->
+          model ! []
+        Just user ->
+          update (UserDisconnected user) model
 
 
 -- SUBSCRIPTIONS

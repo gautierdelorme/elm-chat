@@ -46,13 +46,6 @@ wss.broadcast = function(data) {
   })
 }
 
-wss.sendNewUsersList = function() {
-  wss.broadcast(JSON.stringify({
-    type: 'newUsersList',
-    users: _.map(wss.connectedClients, function(c){return c.pseudo})
-  }))
-}
-
 
 // PROCESSING
 
@@ -60,12 +53,13 @@ wss.sendNewUsersList = function() {
 wss.processLogin = function(ws, pseudo) {
   var accepted = pseudo.length > 0 && wss.verifyPseudo(pseudo) && wss.verifyKey(ws)
   if (accepted) {
+    wss.processNewUser(pseudo)
     wss.connectedClients[wss.keyFor(ws)] = {
       pseudo: pseudo,
       ws: ws
     }
     wss.registerOnCloseFor(ws)
-    wss.sendNewUsersList()
+    wss.processListUsers(ws)
   }
   ws.send(JSON.stringify({
     type: 'loginResponse',
@@ -77,14 +71,36 @@ wss.processLogout = function(ws) {
   ws.close()
 }
 
+wss.processListUsers = function(ws) {
+  ws.send(JSON.stringify({
+    type: 'newUsersList',
+    users: _.map(wss.connectedClients, function(c){return c.pseudo})
+  }))
+}
+
+wss.processNewUser = function(pseudo) {
+  wss.broadcast(JSON.stringify({
+    type: 'newUser',
+    pseudo: pseudo
+  }))
+}
+
+wss.processFormerUser = function(pseudo) {
+  wss.broadcast(JSON.stringify({
+    type: 'formerUser',
+    pseudo: pseudo
+  }))
+}
+
 
 // HELPERS
 
 
 wss.registerOnCloseFor = function(ws) {
   ws.on('close', function() {
+    var pseudo = wss.connectedClients[wss.keyFor(this)].pseudo
     delete wss.connectedClients[wss.keyFor(this)]
-    wss.sendNewUsersList()
+    wss.processFormerUser(pseudo)
   })
 }
 

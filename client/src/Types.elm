@@ -16,7 +16,9 @@ type Msg
   | Send
   | Receive String
   | MessageReceive Message
-  | UsersListUpdated Users
+  | UsersListReceived Users
+  | UserConnected User
+  | UserDisconnected User
   | Mdl (Material.Msg Msg)
 
 
@@ -27,6 +29,8 @@ type MsgServer
   = LoginResponse
   | NewMessage
   | NewUsersList
+  | NewUser
+  | FormerUser
 
 
 -- Pagination

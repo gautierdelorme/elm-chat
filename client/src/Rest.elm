@@ -5,6 +5,7 @@ module Rest exposing
   , decodeTypeServer
   , decodeLoginResponse
   , decodeNewMessage
+  , decodeUser
   , decodeNewUsersList
   , listen
   )
@@ -77,6 +78,10 @@ decodeTypeServer msg =
           Just NewMessage
         "newUsersList" ->
           Just NewUsersList
+        "newUser" ->
+          Just NewUser
+        "formerUser" ->
+          Just FormerUser
         _ ->
           Nothing
 
@@ -120,6 +125,21 @@ decodeNewUsersList msg =
     Ok users ->
       List.map User users
       |> Just
+
+
+user : Decoder.Decoder String
+user =
+  "pseudo" := Decoder.string
+
+
+decodeUser : String -> Maybe(User)
+decodeUser msg =
+  case Decoder.decodeString user msg of
+    Err error ->
+      Nothing
+    Ok pseudo ->
+      Just (User pseudo)
+
 
 -- HANDLING
 
